@@ -18,7 +18,7 @@ export function Layout() {
                 className="h-12 w-14 object-cover"
               />
               <span className="font-['Arimo:Regular',sans-serif] text-xl text-white tracking-wide">
-                Wend by Sakshi Fatnani
+                WENDbysakshifatnani
               </span>
             </Link>
 
@@ -91,7 +91,7 @@ export function Layout() {
                   className="h-12 w-14 object-cover"
                 />
                 <span className="font-['Arimo:Regular',sans-serif] text-2xl tracking-widest">
-                  WEND
+                  WENDbysakshifatnani
                 </span>
               </div>
               <p className="font-['Arimo:Regular',sans-serif] text-sm text-white/75">

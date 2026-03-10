@@ -1,77 +1,89 @@
 import React from "react";
 import { motion } from "motion/react";
 
-const imgImageModernInteriorDesign = "/1.png";
-const imgImageMinimalistLivingRoom = "/2.png";
-const imgImageLuxuryKitchen = "/4.png";
-const imgImageContemporaryBedroom = "/3.png";
-const imgImageModernDiningRoom = "/5.png";
-const imgImageStylishBathroom = "/6.png";
+const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+
+const imageEntries = Object.entries(imageModules).sort(([firstPath], [secondPath]) =>
+  firstPath.localeCompare(secondPath),
+);
+
+function pickImage(folderName: string, fallbackIndex = 0) {
+  const matching = imageEntries.filter(([path]) => path.includes(`/${folderName}/`));
+
+  if (matching.length > 0) {
+    return matching[Math.min(fallbackIndex, matching.length - 1)][1];
+  }
+
+  return imageEntries[fallbackIndex]?.[1] ?? "";
+}
 
 export default function Projects() {
   const [filter, setFilter] = React.useState<string>("All");
 
   const featuredProjects = [
     {
-      img: imgImageModernInteriorDesign,
-      title: "Luxury Villa Renovation",
+      img: pickImage("Bedrooms", 2),
+      title: "Private Residence Suite",
       category: "Residential",
-      description: "A complete transformation of a 4,500 sq ft villa featuring open-concept living spaces, custom millwork, and a sophisticated blend of modern and traditional elements. The project showcases premium materials and meticulous attention to detail.",
-      duration: "8 months",
-      area: "4,500 sq ft",
-      location: "Mumbai, Maharashtra",
-      features: ["Custom Millwork", "Smart Home Integration", "Sustainable Materials", "Open Floor Plan"]
-    },
-    {
-      img: imgImageMinimalistLivingRoom,
-      title: "Contemporary Office Space",
-      category: "Commercial",
-      description: "Modern office design emphasizing collaboration and productivity. Features include flexible workstations, acoustic solutions, biophilic design elements, and technology-integrated meeting spaces for a dynamic work environment.",
-      duration: "6 months",
-      area: "3,200 sq ft",
-      location: "Pune, Maharashtra",
-      features: ["Flexible Workstations", "Acoustic Solutions", "Biophilic Design", "Tech-Integrated Spaces"]
-    },
-    {
-      img: imgImageLuxuryKitchen,
-      title: "Boutique Hotel Suite",
-      category: "Hospitality",
-      description: "Luxurious suite design that creates a memorable guest experience. Featuring custom furniture, curated art pieces, premium textiles, and ambient lighting designed to provide comfort and elegance.",
-      duration: "4 months",
-      area: "800 sq ft",
-      location: "Nashik, Maharashtra",
-      features: ["Custom Furniture", "Curated Artwork", "Premium Textiles", "Ambient Lighting"]
-    },
-    {
-      img: imgImageContemporaryBedroom,
-      title: "Urban Apartment Redesign",
-      category: "Residential",
-      description: "Complete renovation of a city apartment maximizing space and light. Features include modular furniture, hidden storage solutions, and a cohesive color palette that creates flow throughout the space.",
+      description: "A calm and layered bedroom program designed around comfort, integrated lighting, and tailored storage that enhances day-to-day living.",
       duration: "5 months",
-      area: "1,200 sq ft",
+      area: "2,000 sq ft",
       location: "Mumbai, Maharashtra",
-      features: ["Space Optimization", "Hidden Storage", "Modular Furniture", "Natural Light Enhancement"]
+      features: ["Layered Lighting", "Bespoke Wardrobes", "Soft Acoustics", "Material Harmony"],
     },
     {
-      img: imgImageModernDiningRoom,
-      title: "Restaurant Interior",
-      category: "Commercial",
-      description: "Sophisticated dining space that balances ambiance with functionality. Custom lighting, acoustic treatments, and carefully selected materials create an inviting atmosphere for guests.",
-      duration: "7 months",
-      area: "2,800 sq ft",
-      location: "Nashik, Maharashtra",
-      features: ["Custom Lighting", "Acoustic Design", "Open Kitchen Concept", "Bar Design"]
-    },
-    {
-      img: imgImageStylishBathroom,
-      title: "Spa-Inspired Bathroom",
+      img: pickImage("Living Room", 1),
+      title: "Urban Family Living",
       category: "Residential",
-      description: "Tranquil bathroom retreat featuring natural materials, statement fixtures, and thoughtful lighting. The design creates a serene spa-like environment for daily relaxation.",
+      description: "An open living zone that connects lounge and conversation areas with warm textures, contemporary lines, and high visual continuity.",
+      duration: "4 months",
+      area: "1,600 sq ft",
+      location: "Nashik, Maharashtra",
+      features: ["Open Layout", "Statement Ceiling", "Natural Textures", "Custom Joinery"],
+    },
+    {
+      img: pickImage("Kitchen & dining", 0),
+      title: "Kitchen and Dining Redesign",
+      category: "Residential",
+      description: "A practical and elegant kitchen-dining transformation with focused workflow planning, durable finishes, and layered ambient lighting.",
       duration: "3 months",
-      area: "350 sq ft",
+      area: "950 sq ft",
       location: "Pune, Maharashtra",
-      features: ["Natural Stone", "Rainfall Shower", "Heated Floors", "Custom Vanity"]
-    }
+      features: ["Workflow Planning", "Durable Surfaces", "Ambient Lighting", "Integrated Storage"],
+    },
+    {
+      img: pickImage("Lobby", 0),
+      title: "Corporate Lobby Experience",
+      category: "Commercial",
+      description: "A high-impact reception and waiting experience built with clean geometry, directional lighting, and premium materials to strengthen first impressions.",
+      duration: "6 months",
+      area: "3,400 sq ft",
+      location: "Pune, Maharashtra",
+      features: ["Reception Identity", "Directional Lighting", "Premium Surfaces", "Visitor Flow"],
+    },
+    {
+      img: pickImage("Cafe", 1),
+      title: "Cafe Interior Experience",
+      category: "Hospitality",
+      description: "A compact hospitality space designed for high turnover and memorable ambience with curated textures, flexible seating, and warm branding cues.",
+      duration: "4 months",
+      area: "1,100 sq ft",
+      location: "Nashik, Maharashtra",
+      features: ["Flexible Seating", "Lighting Layers", "Brand-led Palette", "Service Efficiency"],
+    },
+    {
+      img: pickImage("Pilate studio- Alcore", 2),
+      title: "Pilates Studio at Alcore",
+      category: "Wellness",
+      description: "A movement-focused studio with clear circulation, calming tones, and spatial rhythm that supports both private and group training sessions.",
+      duration: "5 months",
+      area: "2,300 sq ft",
+      location: "Mumbai, Maharashtra",
+      features: ["Studio Zoning", "Calming Palette", "Training Flexibility", "Clean Detailing"],
+    },
   ];
 
   // compute filtered list based on current filter
@@ -118,6 +130,7 @@ export default function Projects() {
               "Residential",
               "Commercial",
               "Hospitality",
+              "Wellness",
             ].map((tab) => (
               <motion.button
                 key={tab}

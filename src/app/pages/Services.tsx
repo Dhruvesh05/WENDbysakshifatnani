@@ -1,10 +1,29 @@
 3 
 import { motion } from "motion/react";
 
-const imgImageModernInteriorDesign = "/8.png";
-const imgImageMinimalistLivingRoom = "/7.png";
-const imgImageContemporaryBedroom = "/10.png";
-const imgImageLuxuryKitchen = "/9.png";
+const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+
+const imageEntries = Object.entries(imageModules).sort(([firstPath], [secondPath]) =>
+  firstPath.localeCompare(secondPath),
+);
+
+function pickImage(folderName: string, fallbackIndex = 0) {
+  const matching = imageEntries.filter(([path]) => path.includes(`/${folderName}/`));
+
+  if (matching.length > 0) {
+    return matching[Math.min(fallbackIndex, matching.length - 1)][1];
+  }
+
+  return imageEntries[fallbackIndex]?.[1] ?? "";
+}
+
+const imgImageModernInteriorDesign = pickImage("Bedrooms", 1);
+const imgImageMinimalistLivingRoom = pickImage("Lobby", 1);
+const imgImageContemporaryBedroom = pickImage("Living Room", 3);
+const imgImageLuxuryKitchen = pickImage("Kitchen & dining", 0);
 
 export default function Services() {
   const services = [

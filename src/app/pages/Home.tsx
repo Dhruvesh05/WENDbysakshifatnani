@@ -26,13 +26,32 @@ import {
 } from "../components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "../components/ui/dialog";
 
-const imgHeroBackground = "/1.png";
-const imgInteriorOne = "/2.png";
-const imgInteriorTwo = "/4.png";
-const imgInteriorThree = "/7.png";
-const imgInteriorFour = "/8.png";
-const imgInteriorFive = "/9.png";
-const imgInteriorSix = "/10.png";
+const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+
+const imageEntries = Object.entries(imageModules).sort(([firstPath], [secondPath]) =>
+  firstPath.localeCompare(secondPath),
+);
+
+function pickImage(folderName: string, fallbackIndex = 0) {
+  const matching = imageEntries.filter(([path]) => path.includes(`/${folderName}/`));
+
+  if (matching.length > 0) {
+    return matching[Math.min(fallbackIndex, matching.length - 1)][1];
+  }
+
+  return imageEntries[fallbackIndex]?.[1] ?? "";
+}
+
+const imgHeroBackground = pickImage("Living Room", 0);
+const imgInteriorOne = pickImage("Bedrooms", 0);
+const imgInteriorTwo = pickImage("Kitchen & dining", 0);
+const imgInteriorThree = pickImage("Lobby", 0);
+const imgInteriorFour = pickImage("Cafe", 0);
+const imgInteriorFive = pickImage("Pilate studio- Alcore", 0);
+const imgInteriorSix = pickImage("Living Room", 2);
 
 export default function Home() {
   const [heroCarouselApi, setHeroCarouselApi] = useState<CarouselApi>();
