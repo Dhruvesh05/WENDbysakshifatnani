@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -113,13 +114,13 @@ export default function Home() {
     },
     {
       img: imgInteriorTwo,
-      title: "Boutique Hotel Suite",
-      category: "Hospitality",
+      title: "Dining Experience Redesign",
+      category: "Residential",
     },
     {
       img: imgInteriorOne,
-      title: "Contemporary Office Space",
-      category: "Commercial",
+      title: "Master Bedroom Makeover",
+      category: "Residential",
     },
   ];
 
