@@ -1,0 +1,19 @@
+node_modules
+node_modules
+dist
+
+# Build artifacts
+.next
+client-admin-panel/.next
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+client-admin-panel/.env
+client-admin-panel/.env.local
+client-admin-panel/.env.*.local
+
+# Keep templates tracked
+!.env.example
+!client-admin-panel/.env.example

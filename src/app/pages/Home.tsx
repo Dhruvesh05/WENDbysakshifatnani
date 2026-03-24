@@ -26,6 +26,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "../components/ui/dialog";
+import { fetchProjects, WebsiteProject } from "../lib/api";
 
 const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
   eager: true,
@@ -56,6 +57,33 @@ const imgInteriorSix = pickImage("Living Room", 2);
 
 export default function Home() {
   const [heroCarouselApi, setHeroCarouselApi] = useState<CarouselApi>();
+  const [projects, setProjects] = useState<WebsiteProject[]>([]);
+  const [projectsError, setProjectsError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProjects = async () => {
+      try {
+        const data = await fetchProjects();
+        if (isMounted) {
+          setProjects(data);
+          setProjectsError("");
+        }
+      } catch (error) {
+        if (isMounted) {
+          setProjects([]);
+          setProjectsError(error instanceof Error ? error.message : "Failed to load projects.");
+        }
+      }
+    };
+
+    loadProjects();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!heroCarouselApi) {
@@ -71,13 +99,23 @@ export default function Home() {
     };
   }, [heroCarouselApi]);
 
-  const heroCarouselImages = [
-    { src: imgHeroBackground, alt: "Elegant neutral-toned living room" },
-    { src: imgInteriorOne, alt: "Minimalist interior with statement lighting" },
-    { src: imgInteriorTwo, alt: "Luxury kitchen with modern finishes" },
-    { src: imgInteriorThree, alt: "Contemporary bedroom with layered textures" },
-    { src: imgInteriorFour, alt: "Designer lounge with curated materials" },
-  ];
+  const projectImagePool = projects.flatMap((project) =>
+    project.images.map((imageUrl) => ({
+      src: imageUrl,
+      alt: `${project.title} interior design image`,
+    })),
+  );
+
+  const heroCarouselImages =
+    projectImagePool.length > 0
+      ? projectImagePool.slice(0, 6)
+      : [
+          { src: imgHeroBackground, alt: "Elegant neutral-toned living room" },
+          { src: imgInteriorOne, alt: "Minimalist interior with statement lighting" },
+          { src: imgInteriorTwo, alt: "Luxury kitchen with modern finishes" },
+          { src: imgInteriorThree, alt: "Contemporary bedroom with layered textures" },
+          { src: imgInteriorFour, alt: "Designer lounge with curated materials" },
+        ];
 
   const serviceItems = [
     {
@@ -106,23 +144,30 @@ export default function Home() {
     },
   ];
 
-  const featuredProjects = [
-    {
-      img: imgHeroBackground,
-      title: "Luxury Villa Renovation",
-      category: "Residential",
-    },
-    {
-      img: imgInteriorTwo,
-      title: "Dining Experience Redesign",
-      category: "Residential",
-    },
-    {
-      img: imgInteriorOne,
-      title: "Master Bedroom Makeover",
-      category: "Residential",
-    },
-  ];
+  const featuredProjects =
+    projects.length > 0
+      ? projects.slice(0, 3).map((project) => ({
+          img: project.images[0] ?? imgHeroBackground,
+          title: project.title,
+          category: project.category || "Interior",
+        }))
+      : [
+          {
+            img: imgHeroBackground,
+            title: "Luxury Villa Renovation",
+            category: "Residential",
+          },
+          {
+            img: imgInteriorTwo,
+            title: "Dining Experience Redesign",
+            category: "Residential",
+          },
+          {
+            img: imgInteriorOne,
+            title: "Master Bedroom Makeover",
+            category: "Residential",
+          },
+        ];
 
   const testimonials = [
     {
@@ -145,15 +190,18 @@ export default function Home() {
     },
   ];
 
-  const galleryImages = [
-    imgHeroBackground,
-    imgInteriorOne,
-    imgInteriorTwo,
-    imgInteriorThree,
-    imgInteriorFour,
-    imgInteriorFive,
-    imgInteriorSix,
-  ];
+  const galleryImages =
+    projectImagePool.length > 0
+      ? projectImagePool.map((image) => image.src)
+      : [
+          imgHeroBackground,
+          imgInteriorOne,
+          imgInteriorTwo,
+          imgInteriorThree,
+          imgInteriorFour,
+          imgInteriorFive,
+          imgInteriorSix,
+        ];
 
   return (
     <>
@@ -203,6 +251,9 @@ export default function Home() {
               Start Your Project
               <ArrowRight className="size-5" />
             </Link>
+            {projectsError ? (
+              <p className="text-sm text-white/80">Showing fallback content: {projectsError}</p>
+            ) : null}
           </motion.div>
         </div>
       </section>

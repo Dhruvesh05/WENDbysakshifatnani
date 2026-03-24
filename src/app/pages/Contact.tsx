@@ -1,7 +1,47 @@
+import { FormEvent, useState } from "react";
 import { motion } from "motion/react";
 import svgPaths from "../../imports/svg-x7swsbypsk";
+import { submitContactForm } from "../lib/api";
 
 export default function Contact() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [service, setService] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const result = await submitContactForm({
+        name: name.trim(),
+        email: email.trim(),
+        service,
+        message: message.trim(),
+      });
+
+      setName("");
+      setEmail("");
+      setService("");
+      setMessage("");
+      if (result.warning) {
+        setSuccessMessage(`Thanks for reaching out. ${result.warning}`);
+      } else {
+        setSuccessMessage("Thanks for reaching out. We will contact you shortly.");
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -150,6 +190,7 @@ export default function Contact() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
+              onSubmit={handleSubmit}
             >
               <div>
                 <label className="block font-['Arimo:Regular',sans-serif] text-[#0a0a0a] mb-2">
@@ -157,6 +198,9 @@ export default function Contact() {
                 </label>
                 <input
                   type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  required
                   className="w-full px-4 py-3 border border-[#d1d5dc] rounded focus:outline-none focus:ring-2 focus:ring-[#072c3c] transition-all duration-200"
                   placeholder="Your name"
                 />
@@ -168,6 +212,9 @@ export default function Contact() {
                 </label>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
                   className="w-full px-4 py-3 border border-[#d1d5dc] rounded focus:outline-none focus:ring-2 focus:ring-[#072c3c] transition-all duration-200"
                   placeholder="your.email@example.com"
                 />
@@ -178,6 +225,9 @@ export default function Contact() {
                   Service Interested In
                 </label>
                 <select
+                  value={service}
+                  onChange={(event) => setService(event.target.value)}
+                  required
                   className="w-full px-4 py-3 border border-[#d1d5dc] rounded focus:outline-none focus:ring-2 focus:ring-[#072c3c] transition-all duration-200 bg-white"
                 >
                   <option value="">Select a service</option>
@@ -195,18 +245,29 @@ export default function Contact() {
                 </label>
                 <textarea
                   rows={6}
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  required
                   className="w-full px-4 py-3 border border-[#d1d5dc] rounded focus:outline-none focus:ring-2 focus:ring-[#072c3c] transition-all duration-200 resize-none"
                   placeholder="Tell us about your project..."
                 ></textarea>
               </div>
 
+              {successMessage ? (
+                <p className="rounded bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</p>
+              ) : null}
+              {errorMessage ? (
+                <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+              ) : null}
+
               <motion.button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full bg-[#072c3c] text-white py-4 rounded hover:bg-[#0a3d52] transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
               </motion.button>
             </motion.form>
           </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
+import { fetchProjects, WebsiteProject } from "../lib/api";
 
 const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
   eager: true,
@@ -20,77 +21,127 @@ function pickImage(folderName: string, fallbackIndex = 0) {
   return imageEntries[fallbackIndex]?.[1] ?? "";
 }
 
+type ProjectViewModel = {
+  img: string;
+  title: string;
+  category: string;
+  description: string;
+  duration: string;
+  area: string;
+  location: string;
+  features: string[];
+};
+
+const fallbackProjects: ProjectViewModel[] = [
+  {
+    img: pickImage("Bedrooms", 2),
+    title: "Private Residence Suite",
+    category: "Residential",
+    description: "A calm and layered bedroom program designed around comfort, integrated lighting, and tailored storage that enhances day-to-day living.",
+    duration: "5 months",
+    area: "2,000 sq ft",
+    location: "Mumbai, Maharashtra",
+    features: ["Layered Lighting", "Bespoke Wardrobes", "Soft Acoustics", "Material Harmony"],
+  },
+  {
+    img: pickImage("Living Room", 1),
+    title: "Urban Family Living",
+    category: "Residential",
+    description: "An open living zone that connects lounge and conversation areas with warm textures, contemporary lines, and high visual continuity.",
+    duration: "4 months",
+    area: "1,600 sq ft",
+    location: "Nashik, Maharashtra",
+    features: ["Open Layout", "Statement Ceiling", "Natural Textures", "Custom Joinery"],
+  },
+  {
+    img: pickImage("Kitchen & dining", 0),
+    title: "Kitchen and Dining Redesign",
+    category: "Residential",
+    description: "A practical and elegant kitchen-dining transformation with focused workflow planning, durable finishes, and layered ambient lighting.",
+    duration: "3 months",
+    area: "950 sq ft",
+    location: "Pune, Maharashtra",
+    features: ["Workflow Planning", "Durable Surfaces", "Ambient Lighting", "Integrated Storage"],
+  },
+  {
+    img: pickImage("Lobby", 0),
+    title: "Corporate Lobby Experience",
+    category: "Commercial",
+    description: "A high-impact reception and waiting experience built with clean geometry, directional lighting, and premium materials to strengthen first impressions.",
+    duration: "6 months",
+    area: "3,400 sq ft",
+    location: "Pune, Maharashtra",
+    features: ["Reception Identity", "Directional Lighting", "Premium Surfaces", "Visitor Flow"],
+  },
+  {
+    img: pickImage("Cafe", 1),
+    title: "Cafe Interior Experience",
+    category: "Hospitality",
+    description: "A compact hospitality space designed for high turnover and memorable ambience with curated textures, flexible seating, and warm branding cues.",
+    duration: "4 months",
+    area: "1,100 sq ft",
+    location: "Nashik, Maharashtra",
+    features: ["Flexible Seating", "Lighting Layers", "Brand-led Palette", "Service Efficiency"],
+  },
+  {
+    img: pickImage("Pilate studio- Alcore", 2),
+    title: "Pilates Studio at Alcore",
+    category: "Wellness",
+    description: "A movement-focused studio with clear circulation, calming tones, and spatial rhythm that supports both private and group training sessions.",
+    duration: "5 months",
+    area: "2,300 sq ft",
+    location: "Mumbai, Maharashtra",
+    features: ["Studio Zoning", "Calming Palette", "Training Flexibility", "Clean Detailing"],
+  },
+];
+
 export default function Projects() {
   const [filter, setFilter] = React.useState<string>("All");
+  const [projects, setProjects] = React.useState<ProjectViewModel[]>(fallbackProjects);
+  const [projectError, setProjectError] = React.useState("");
 
-  const featuredProjects = [
-    {
-      img: pickImage("Bedrooms", 2),
-      title: "Private Residence Suite",
-      category: "Residential",
-      description: "A calm and layered bedroom program designed around comfort, integrated lighting, and tailored storage that enhances day-to-day living.",
-      duration: "5 months",
-      area: "2,000 sq ft",
-      location: "Mumbai, Maharashtra",
-      features: ["Layered Lighting", "Bespoke Wardrobes", "Soft Acoustics", "Material Harmony"],
-    },
-    {
-      img: pickImage("Living Room", 1),
-      title: "Urban Family Living",
-      category: "Residential",
-      description: "An open living zone that connects lounge and conversation areas with warm textures, contemporary lines, and high visual continuity.",
-      duration: "4 months",
-      area: "1,600 sq ft",
-      location: "Nashik, Maharashtra",
-      features: ["Open Layout", "Statement Ceiling", "Natural Textures", "Custom Joinery"],
-    },
-    {
-      img: pickImage("Kitchen & dining", 0),
-      title: "Kitchen and Dining Redesign",
-      category: "Residential",
-      description: "A practical and elegant kitchen-dining transformation with focused workflow planning, durable finishes, and layered ambient lighting.",
-      duration: "3 months",
-      area: "950 sq ft",
-      location: "Pune, Maharashtra",
-      features: ["Workflow Planning", "Durable Surfaces", "Ambient Lighting", "Integrated Storage"],
-    },
-    {
-      img: pickImage("Lobby", 0),
-      title: "Corporate Lobby Experience",
-      category: "Commercial",
-      description: "A high-impact reception and waiting experience built with clean geometry, directional lighting, and premium materials to strengthen first impressions.",
-      duration: "6 months",
-      area: "3,400 sq ft",
-      location: "Pune, Maharashtra",
-      features: ["Reception Identity", "Directional Lighting", "Premium Surfaces", "Visitor Flow"],
-    },
-    {
-      img: pickImage("Cafe", 1),
-      title: "Cafe Interior Experience",
-      category: "Hospitality",
-      description: "A compact hospitality space designed for high turnover and memorable ambience with curated textures, flexible seating, and warm branding cues.",
-      duration: "4 months",
-      area: "1,100 sq ft",
-      location: "Nashik, Maharashtra",
-      features: ["Flexible Seating", "Lighting Layers", "Brand-led Palette", "Service Efficiency"],
-    },
-    {
-      img: pickImage("Pilate studio- Alcore", 2),
-      title: "Pilates Studio at Alcore",
-      category: "Wellness",
-      description: "A movement-focused studio with clear circulation, calming tones, and spatial rhythm that supports both private and group training sessions.",
-      duration: "5 months",
-      area: "2,300 sq ft",
-      location: "Mumbai, Maharashtra",
-      features: ["Studio Zoning", "Calming Palette", "Training Flexibility", "Clean Detailing"],
-    },
-  ];
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadProjects = async () => {
+      try {
+        const data = await fetchProjects();
+        if (!mounted || data.length === 0) {
+          return;
+        }
+
+        const mapped: ProjectViewModel[] = data.map((item: WebsiteProject) => ({
+          img: item.images[0] ?? pickImage("Living Room", 0),
+          title: item.title,
+          category: item.category?.trim() || "Residential",
+          description: item.description,
+          duration: "Custom timeline",
+          area: "Details available on request",
+          location: item.location?.trim() || "Location available on request",
+          features: ["Tailored Design", "Material Planning", "Execution Support", "Client-first Process"],
+        }));
+
+        setProjects(mapped);
+        setProjectError("");
+      } catch (error) {
+        setProjectError(error instanceof Error ? error.message : "Failed to load projects.");
+      }
+    };
+
+    loadProjects();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const featuredProjects = projects;
 
   // compute filtered list based on current filter
   const filteredProjects = React.useMemo(() => {
     if (filter === "All") return featuredProjects;
     return featuredProjects.filter((p) => p.category === filter);
-  }, [filter]);
+  }, [filter, featuredProjects]);
 
   return (
     <div className="min-h-screen">
@@ -113,6 +164,9 @@ export default function Projects() {
           >
             Transforming visions into reality through thoughtful design, innovative solutions, and exceptional craftsmanship
           </motion.p>
+          {projectError ? (
+            <p className="mt-3 text-sm text-[#d9dde2]">Showing saved design entries while live data loads: {projectError}</p>
+          ) : null}
         </div>
       </section>
 
