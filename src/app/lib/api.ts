@@ -1,3 +1,5 @@
+import emailjs from '@emailjs/browser';
+
 export interface WebsiteProject {
   id: string;
   title: string;
@@ -5,10 +7,21 @@ export interface WebsiteProject {
   location?: string;
   category?: string;
   images: string[];
+  modelSrc?: string;
+  iosSrc?: string;
+  arModelSrc?: string;
+  arIosSrc?: string;
+  glbModel?: string;
+  usdzModel?: string;
   createdAt?: string;
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+const hasEmailJsConfig = Boolean(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
 
 const parseError = async (response: Response) => {
   const fallback = `Request failed with status ${response.status}`;
@@ -18,6 +31,18 @@ const parseError = async (response: Response) => {
   } catch {
     return fallback;
   }
+};
+
+const toAbsoluteMediaUrl = (url: string) => {
+  if (!url) {
+    return url;
+  }
+
+  if (/^https?:\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
 };
 
 export const fetchProjects = async (): Promise<WebsiteProject[]> => {
@@ -30,19 +55,51 @@ export const fetchProjects = async (): Promise<WebsiteProject[]> => {
     throw new Error(await parseError(response));
   }
 
-  return (await response.json()) as WebsiteProject[];
+  const projects = (await response.json()) as WebsiteProject[];
+  return projects.map((project) => ({
+    ...project,
+    images: Array.isArray(project.images) ? project.images.map(toAbsoluteMediaUrl) : [],
+  }));
 };
 
 export const submitContactForm = async (payload: {
   name: string;
   email: string;
+  location?: string;
   service: string;
   message: string;
 }): Promise<{ warning?: string }> => {
+  let sentViaEmailJs = false;
+
+  if (hasEmailJsConfig) {
+    try {
+      await emailjs.send(
+        EMAILJS_SERVICE_ID!,
+        EMAILJS_TEMPLATE_ID!,
+        {
+          name: payload.name,
+          email: payload.email,
+          location: payload.location,
+          service: payload.service,
+          message: payload.message,
+        },
+        {
+          publicKey: EMAILJS_PUBLIC_KEY!,
+        },
+      );
+      sentViaEmailJs = true;
+    } catch {
+      throw new Error('Failed to send message via EmailJS. Please check your EmailJS settings and try again.');
+    }
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/contact`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      skipEmailNotification: sentViaEmailJs,
+    }),
   });
 
   if (!response.ok) {

@@ -140,11 +140,12 @@ export const contactsDb = {
       .toArray();
   },
 
-  async create(data: Pick<ContactMessage, 'name' | 'email' | 'message' | 'service'>): Promise<ContactMessage> {
+  async create(data: Pick<ContactMessage, 'name' | 'email' | 'location' | 'message' | 'service'>): Promise<ContactMessage> {
     const contact: ContactMessage = {
       id: crypto.randomUUID(),
       name: data.name,
       email: data.email,
+      location: data.location,
       service: data.service,
       message: data.message,
       createdAt: new Date().toISOString(),

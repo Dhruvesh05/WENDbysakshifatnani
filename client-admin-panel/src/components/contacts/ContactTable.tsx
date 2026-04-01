@@ -75,6 +75,7 @@ const ContactTable = () => {
           <tr>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Email</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Location</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Service</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Message</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Date</th>
@@ -86,6 +87,7 @@ const ContactTable = () => {
             <tr key={contact.id} className="border-b border-gray-100 align-top">
               <td className="px-4 py-3 font-medium text-gray-900">{contact.name}</td>
               <td className="px-4 py-3 text-gray-600">{contact.email}</td>
+              <td className="hidden px-4 py-3 text-gray-600 md:table-cell">{contact.location || '—'}</td>
               <td className="hidden px-4 py-3 text-gray-600 md:table-cell">{contact.service || '—'}</td>
               <td className="hidden max-w-md px-4 py-3 text-gray-600 md:table-cell">{contact.message}</td>
               <td className="hidden whitespace-nowrap px-4 py-3 text-gray-500 lg:table-cell">

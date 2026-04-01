@@ -17,3 +17,6 @@ client-admin-panel/.env.*.local
 # Keep templates tracked
 !.env.example
 !client-admin-panel/.env.example
+
+# Runtime uploads
+client-admin-panel/public/uploads

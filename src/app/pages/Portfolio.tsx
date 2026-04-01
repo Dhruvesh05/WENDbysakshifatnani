@@ -81,9 +81,8 @@ export default function Portfolio() {
     }))
     .filter((group) => group.images.length > 0);
 
-
   return (
-    <div className="min-h-screen">
+    <div className="gallery-theme-scope min-h-screen transition-colors duration-500">
       {/* Portfolio Header */}
       <section className="bg-[#072c3c] py-20">
         <div className="container mx-auto px-8 text-center">
@@ -105,7 +104,6 @@ export default function Portfolio() {
           </motion.p>
         </div>
       </section>
-
 
       {/* Category Carousels */}
       <section className="py-20">
@@ -130,12 +128,15 @@ export default function Portfolio() {
                       key={`${group.title}-${imageIndex}`}
                       className="basis-full md:basis-1/2 lg:basis-1/3"
                     >
-                      <div className="overflow-hidden rounded-2xl shadow-md">
+                      <div className="relative overflow-hidden rounded-2xl shadow-md">
                         <img
                           src={img}
                           alt={`${group.title} interior`}
-                          className="h-[260px] w-full object-cover sm:h-[320px] lg:h-[360px]"
+                          className="gallery-image h-[260px] w-full object-cover sm:h-[320px] lg:h-[360px]"
                         />
+                        <div className="gallery-day-overlay" aria-hidden="true"></div>
+                        <div className="gallery-night-overlay" aria-hidden="true"></div>
+                        <div className="gallery-night-lamp-glow" aria-hidden="true"></div>
                       </div>
                     </CarouselItem>
                   ))}

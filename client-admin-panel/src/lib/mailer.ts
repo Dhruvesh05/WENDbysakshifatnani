@@ -61,6 +61,7 @@ const getTransporter = (config: MailConfig) => {
 export const sendContactNotificationEmail = async (payload: {
   name: string;
   email: string;
+  location?: string;
   service: string;
   message: string;
 }) => {
@@ -73,6 +74,7 @@ export const sendContactNotificationEmail = async (payload: {
     '',
     `Name: ${payload.name}`,
     `Email: ${payload.email}`,
+    `Location: ${payload.location || 'Not provided'}`,
     `Service: ${payload.service}`,
     '',
     'Message:',
@@ -83,6 +85,7 @@ export const sendContactNotificationEmail = async (payload: {
     <h2>New Contact Enquiry</h2>
     <p><strong>Name:</strong> ${payload.name}</p>
     <p><strong>Email:</strong> ${payload.email}</p>
+    <p><strong>Location:</strong> ${payload.location || 'Not provided'}</p>
     <p><strong>Service:</strong> ${payload.service}</p>
     <p><strong>Message:</strong></p>
     <p>${payload.message.replace(/\n/g, '<br/>')}</p>

@@ -5,7 +5,7 @@ const imgImage2 = "/logo.png";
 
 export function Layout() {
   return (
-    <div className="bg-[#f3f6ff] min-h-screen">
+    <div className="min-h-screen bg-[#f3f6ff] transition-colors duration-500 day-mode">
       {/* Navbar */}
       <nav className="bg-[#072c3c] shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-8 py-4">
@@ -68,11 +68,13 @@ export function Layout() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button className="md:hidden p-2">
-              <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2 md:hidden">
+              <button className="p-2">
+                <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </nav>

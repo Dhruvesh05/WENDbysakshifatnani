@@ -6,6 +6,7 @@ import { submitContactForm } from "../lib/api";
 export default function Contact() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [location, setLocation] = useState("");
   const [service, setService] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,12 +23,14 @@ export default function Contact() {
       const result = await submitContactForm({
         name: name.trim(),
         email: email.trim(),
+        location: location.trim(),
         service,
         message: message.trim(),
       });
 
       setName("");
       setEmail("");
+      setLocation("");
       setService("");
       setMessage("");
       if (result.warning) {
@@ -217,6 +220,19 @@ export default function Contact() {
                   required
                   className="w-full px-4 py-3 border border-[#d1d5dc] rounded focus:outline-none focus:ring-2 focus:ring-[#072c3c] transition-all duration-200"
                   placeholder="your.email@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block font-['Arimo:Regular',sans-serif] text-[#0a0a0a] mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  className="w-full px-4 py-3 border border-[#d1d5dc] rounded focus:outline-none focus:ring-2 focus:ring-[#072c3c] transition-all duration-200"
+                  placeholder="City, State"
                 />
               </div>
 

@@ -22,20 +22,17 @@ export interface ContactMessage {
   id?: string;
   name: string;
   email: string;
+  location?: string;
   service?: string;
   message: string;
   createdAt?: string;
 }
 
 export const PROJECT_CATEGORIES = [
-  'Living Room',
-  'Bedroom',
-  'Kitchen & Dining',
-  'Lobby',
-  'Cafe',
-  'Studio',
-  'Office',
-  'Other',
+  'Residential',
+  'Commercial',
+  'Hospitality',
+  'Wellness',
 ] as const;
 
 export type ProjectCategory = (typeof PROJECT_CATEGORIES)[number];

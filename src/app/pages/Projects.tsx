@@ -21,75 +21,108 @@ function pickImage(folderName: string, fallbackIndex = 0) {
   return imageEntries[fallbackIndex]?.[1] ?? "";
 }
 
+function pickImages(folderName: string, fallbackIndex = 0, maxImages = 4) {
+  const matching = imageEntries
+    .filter(([path]) => path.includes(`/${folderName}/`))
+    .map(([, src]) => src)
+    .slice(0, maxImages);
+
+  if (matching.length > 0) {
+    return matching;
+  }
+
+  const fallbackImage = imageEntries[fallbackIndex]?.[1] ?? "";
+  return fallbackImage ? [fallbackImage] : [];
+}
+
 type ProjectViewModel = {
-  img: string;
+  images: string[];
   title: string;
   category: string;
   description: string;
-  duration: string;
-  area: string;
   location: string;
   features: string[];
 };
 
+const PROJECT_FILTER_CATEGORIES = ["Residential", "Commercial", "Hospitality", "Wellness"] as const;
+
+function normalizeProjectCategory(rawCategory?: string) {
+  const trimmedCategory = rawCategory?.trim();
+  if (!trimmedCategory) {
+    return "Residential";
+  }
+
+  if (PROJECT_FILTER_CATEGORIES.includes(trimmedCategory as (typeof PROJECT_FILTER_CATEGORIES)[number])) {
+    return trimmedCategory;
+  }
+
+  const loweredCategory = trimmedCategory.toLowerCase();
+
+  if (["living room", "bedroom", "kitchen", "dining", "residential", "home", "apartment", "villa"].some((keyword) => loweredCategory.includes(keyword))) {
+    return "Residential";
+  }
+
+  if (["office", "studio", "workspace", "retail", "corporate", "commercial"].some((keyword) => loweredCategory.includes(keyword))) {
+    return "Commercial";
+  }
+
+  if (["cafe", "lobby", "hotel", "hospitality", "restaurant", "bar"].some((keyword) => loweredCategory.includes(keyword))) {
+    return "Hospitality";
+  }
+
+  if (["wellness", "pilates", "yoga", "spa", "gym", "clinic"].some((keyword) => loweredCategory.includes(keyword))) {
+    return "Wellness";
+  }
+
+  return "Residential";
+}
+
 const fallbackProjects: ProjectViewModel[] = [
   {
-    img: pickImage("Bedrooms", 2),
+    images: pickImages("Bedrooms", 2),
     title: "Private Residence Suite",
     category: "Residential",
     description: "A calm and layered bedroom program designed around comfort, integrated lighting, and tailored storage that enhances day-to-day living.",
-    duration: "5 months",
-    area: "2,000 sq ft",
     location: "Mumbai, Maharashtra",
     features: ["Layered Lighting", "Bespoke Wardrobes", "Soft Acoustics", "Material Harmony"],
   },
   {
-    img: pickImage("Living Room", 1),
+    images: pickImages("Living Room", 1),
     title: "Urban Family Living",
     category: "Residential",
     description: "An open living zone that connects lounge and conversation areas with warm textures, contemporary lines, and high visual continuity.",
-    duration: "4 months",
-    area: "1,600 sq ft",
     location: "Nashik, Maharashtra",
     features: ["Open Layout", "Statement Ceiling", "Natural Textures", "Custom Joinery"],
   },
   {
-    img: pickImage("Kitchen & dining", 0),
+    images: pickImages("Kitchen & dining", 0),
     title: "Kitchen and Dining Redesign",
     category: "Residential",
     description: "A practical and elegant kitchen-dining transformation with focused workflow planning, durable finishes, and layered ambient lighting.",
-    duration: "3 months",
-    area: "950 sq ft",
     location: "Pune, Maharashtra",
     features: ["Workflow Planning", "Durable Surfaces", "Ambient Lighting", "Integrated Storage"],
   },
   {
-    img: pickImage("Lobby", 0),
+    images: pickImages("Lobby", 0),
     title: "Corporate Lobby Experience",
     category: "Commercial",
     description: "A high-impact reception and waiting experience built with clean geometry, directional lighting, and premium materials to strengthen first impressions.",
-    duration: "6 months",
-    area: "3,400 sq ft",
     location: "Pune, Maharashtra",
     features: ["Reception Identity", "Directional Lighting", "Premium Surfaces", "Visitor Flow"],
   },
   {
-    img: pickImage("Cafe", 1),
+    images: pickImages("Cafe", 1),
     title: "Cafe Interior Experience",
     category: "Hospitality",
     description: "A compact hospitality space designed for high turnover and memorable ambience with curated textures, flexible seating, and warm branding cues.",
-    duration: "4 months",
-    area: "1,100 sq ft",
     location: "Nashik, Maharashtra",
     features: ["Flexible Seating", "Lighting Layers", "Brand-led Palette", "Service Efficiency"],
   },
   {
-    img: pickImage("Pilate studio- Alcore", 2),
+    images: pickImages("Pilate studio- Alcore", 2),
     title: "Pilates Studio at Alcore",
     category: "Wellness",
     description: "A movement-focused studio with clear circulation, calming tones, and spatial rhythm that supports both private and group training sessions.",
-    duration: "5 months",
-    area: "2,300 sq ft",
     location: "Mumbai, Maharashtra",
     features: ["Studio Zoning", "Calming Palette", "Training Flexibility", "Clean Detailing"],
   },
@@ -99,6 +132,8 @@ export default function Projects() {
   const [filter, setFilter] = React.useState<string>("All");
   const [projects, setProjects] = React.useState<ProjectViewModel[]>(fallbackProjects);
   const [projectError, setProjectError] = React.useState("");
+  const [activeSlides, setActiveSlides] = React.useState<Record<number, number>>({});
+  const touchStartX = React.useRef<Record<number, number>>({});
 
   React.useEffect(() => {
     let mounted = true;
@@ -110,16 +145,21 @@ export default function Projects() {
           return;
         }
 
-        const mapped: ProjectViewModel[] = data.map((item: WebsiteProject) => ({
-          img: item.images[0] ?? pickImage("Living Room", 0),
-          title: item.title,
-          category: item.category?.trim() || "Residential",
-          description: item.description,
-          duration: "Custom timeline",
-          area: "Details available on request",
-          location: item.location?.trim() || "Location available on request",
-          features: ["Tailored Design", "Material Planning", "Execution Support", "Client-first Process"],
-        }));
+        const mapped: ProjectViewModel[] = data.map((item: WebsiteProject) => {
+          const normalizedCategory = normalizeProjectCategory(item.category);
+
+          return {
+            images:
+              Array.isArray(item.images) && item.images.length > 0
+                ? item.images
+                : pickImages("Living Room", 0),
+            title: item.title,
+            category: normalizedCategory,
+            description: item.description,
+            location: item.location?.trim() || "Location available on request",
+            features: ["Tailored Design", "Material Planning", "Execution Support", "Client-first Process"],
+          };
+        });
 
         setProjects(mapped);
         setProjectError("");
@@ -137,6 +177,55 @@ export default function Projects() {
 
   const featuredProjects = projects;
 
+  const getActiveSlide = React.useCallback(
+    (projectIndex: number, totalImages: number) => {
+      const current = activeSlides[projectIndex] ?? 0;
+      if (totalImages <= 0) {
+        return 0;
+      }
+
+      return Math.min(current, totalImages - 1);
+    },
+    [activeSlides],
+  );
+
+  const goToSlide = React.useCallback((projectIndex: number, nextIndex: number, totalImages: number) => {
+    if (totalImages <= 0) {
+      return;
+    }
+
+    const normalized = ((nextIndex % totalImages) + totalImages) % totalImages;
+    setActiveSlides((previous) => ({ ...previous, [projectIndex]: normalized }));
+  }, []);
+
+  const onTouchStart = React.useCallback((projectIndex: number, clientX: number) => {
+    touchStartX.current[projectIndex] = clientX;
+  }, []);
+
+  const onTouchEnd = React.useCallback(
+    (projectIndex: number, clientX: number, totalImages: number) => {
+      const startX = touchStartX.current[projectIndex];
+      if (typeof startX !== "number") {
+        return;
+      }
+
+      const deltaX = startX - clientX;
+      const swipeThreshold = 40;
+      const currentSlide = getActiveSlide(projectIndex, totalImages);
+
+      if (Math.abs(deltaX) < swipeThreshold) {
+        return;
+      }
+
+      if (deltaX > 0) {
+        goToSlide(projectIndex, currentSlide + 1, totalImages);
+      } else {
+        goToSlide(projectIndex, currentSlide - 1, totalImages);
+      }
+    },
+    [getActiveSlide, goToSlide],
+  );
+
   // compute filtered list based on current filter
   const filteredProjects = React.useMemo(() => {
     if (filter === "All") return featuredProjects;
@@ -144,7 +233,7 @@ export default function Projects() {
   }, [filter, featuredProjects]);
 
   return (
-    <div className="min-h-screen">
+    <div className="gallery-theme-scope min-h-screen transition-colors duration-500">
       {/* Projects Header */}
       <section className="bg-[#072c3c] py-20">
         <div className="container mx-auto px-8 text-center">
@@ -179,13 +268,7 @@ export default function Projects() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            {[
-              "All",
-              "Residential",
-              "Commercial",
-              "Hospitality",
-              "Wellness",
-            ].map((tab) => (
+            {["All", ...PROJECT_FILTER_CATEGORIES].map((tab) => (
               <motion.button
                 key={tab}
                 type="button"
@@ -212,7 +295,12 @@ export default function Projects() {
       <section className="py-20">
         <div className="container mx-auto px-8">
           <div className="space-y-24">
-            {filteredProjects.map((project, index) => (
+            {filteredProjects.map((project, index) => {
+              const totalImages = project.images.length;
+              const activeSlide = getActiveSlide(index, totalImages);
+              const activeImage = project.images[activeSlide] ?? pickImage("Living Room", 0);
+
+              return (
               <motion.div
                 key={index}
                 className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${
@@ -233,16 +321,62 @@ export default function Projects() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <div className="relative overflow-hidden rounded-lg shadow-2xl">
+                  <div
+                    className="relative overflow-hidden rounded-lg shadow-2xl"
+                    onTouchStart={(event) => onTouchStart(index, event.touches[0].clientX)}
+                    onTouchEnd={(event) => onTouchEnd(index, event.changedTouches[0].clientX, totalImages)}
+                  >
                     <motion.img
-                      src={project.img}
+                      key={`${project.title}-${activeSlide}`}
+                      src={activeImage}
                       alt={project.title}
-                      className="w-full h-[500px] object-cover"
+                      className="gallery-image h-[500px] w-full object-cover"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.5 }}
+                      initial={{ opacity: 0.7 }}
+                      animate={{ opacity: 1 }}
                     />
-                    <div className="absolute inset-0 bg-[#072c3c] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-lg"></div>
+                    <div className="gallery-day-overlay pointer-events-none" aria-hidden="true"></div>
+                    <div className="gallery-night-overlay pointer-events-none" aria-hidden="true"></div>
+                    <div className="gallery-night-lamp-glow pointer-events-none" aria-hidden="true"></div>
+                    <div className="pointer-events-none absolute inset-0 bg-[#072c3c] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-lg"></div>
+
+                    {totalImages > 1 ? (
+                      <>
+                        <button
+                          type="button"
+                          aria-label={`Previous image for ${project.title}`}
+                          onClick={() => goToSlide(index, activeSlide - 1, totalImages)}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-white backdrop-blur-sm transition hover:bg-black/65"
+                        >
+                          &lt;
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Next image for ${project.title}`}
+                          onClick={() => goToSlide(index, activeSlide + 1, totalImages)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-white backdrop-blur-sm transition hover:bg-black/65"
+                        >
+                          &gt;
+                        </button>
+
+                        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+                          {project.images.map((_, imageIndex) => (
+                            <button
+                              key={`${project.title}-dot-${imageIndex}`}
+                              type="button"
+                              aria-label={`Go to image ${imageIndex + 1} for ${project.title}`}
+                              onClick={() => goToSlide(index, imageIndex, totalImages)}
+                              className={`h-2.5 w-2.5 rounded-full transition ${
+                                activeSlide === imageIndex ? "bg-white" : "bg-white/50 hover:bg-white/80"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
                   </div>
+
                 </motion.div>
 
                 {/* Content */}
@@ -290,40 +424,6 @@ export default function Projects() {
                     {project.description}
                   </motion.p>
 
-                  {/* Project Details */}
-                  <motion.div
-                    className="grid grid-cols-2 gap-4 pt-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.7 }}
-                  >
-                    <motion.div
-                      className="bg-[#f9fafb] p-4 rounded"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <span className="font-['Arimo:Regular',sans-serif] text-[#072c3c] block text-sm mb-1">
-                        Duration
-                      </span>
-                      <span className="font-['Arimo:Regular',sans-serif] text-[#0a0a0a] text-lg">
-                        {project.duration}
-                      </span>
-                    </motion.div>
-                    <motion.div
-                      className="bg-[#f9fafb] p-4 rounded"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <span className="font-['Arimo:Regular',sans-serif] text-[#072c3c] block text-sm mb-1">
-                        Area
-                      </span>
-                      <span className="font-['Arimo:Regular',sans-serif] text-[#0a0a0a] text-lg">
-                        {project.area}
-                      </span>
-                    </motion.div>
-                  </motion.div>
-
                   {/* Features */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -352,7 +452,7 @@ export default function Projects() {
                   </motion.div>
                 </motion.div>
               </motion.div>
-            ))}
+            );})}
           </div>
         </div>
       </section>

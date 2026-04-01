@@ -179,3 +179,76 @@
     line-height: 1.5;
   }
 }
+
+@layer components {
+  .gallery-theme-scope .gallery-image {
+    transition: filter 650ms cubic-bezier(0.22, 1, 0.36, 1), transform 500ms ease;
+  }
+
+  .gallery-theme-scope .gallery-day-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      radial-gradient(100% 72% at 18% 10%, rgba(255, 243, 214, 0.3) 0%, rgba(255, 243, 214, 0.11) 34%, rgba(255, 243, 214, 0) 60%),
+      linear-gradient(170deg, rgba(255, 255, 255, 0.08) 0%, rgba(232, 242, 255, 0.04) 42%, rgba(255, 255, 255, 0) 72%);
+    mix-blend-mode: screen;
+    opacity: 0.72;
+    transition: opacity 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .gallery-theme-scope .gallery-night-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      radial-gradient(110% 95% at 90% 0%, rgba(16, 37, 77, 0.42) 0%, rgba(10, 20, 42, 0.15) 45%, rgba(10, 20, 42, 0) 70%),
+      linear-gradient(180deg, rgba(13, 23, 42, 0.34) 0%, rgba(8, 13, 25, 0.62) 100%);
+    opacity: 0;
+    transition: opacity 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .gallery-theme-scope .gallery-night-lamp-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      radial-gradient(70% 54% at 50% 85%, rgba(255, 214, 145, 0.62) 0%, rgba(255, 214, 145, 0.34) 25%, rgba(255, 214, 145, 0.09) 46%, rgba(255, 214, 145, 0) 68%),
+      radial-gradient(42% 30% at 50% 74%, rgba(255, 191, 110, 0.28) 0%, rgba(255, 191, 110, 0) 62%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .day-mode .gallery-theme-scope .gallery-image {
+    filter: brightness(1.08) contrast(1.02) saturate(1.05);
+  }
+
+  .day-mode .gallery-theme-scope .gallery-day-overlay {
+    opacity: 0.72;
+  }
+
+  .day-mode .gallery-theme-scope .gallery-night-overlay,
+  .day-mode .gallery-theme-scope .gallery-night-lamp-glow {
+    opacity: 0;
+  }
+
+  .night-mode .gallery-theme-scope .gallery-image {
+    filter: brightness(0.57) contrast(1.16) saturate(0.7);
+  }
+
+  .night-mode .gallery-theme-scope .gallery-day-overlay {
+    opacity: 0.08;
+  }
+
+  .night-mode .gallery-theme-scope .gallery-night-overlay {
+    opacity: 1;
+  }
+
+  .night-mode .gallery-theme-scope .gallery-night-lamp-glow {
+    opacity: 1;
+  }
+}

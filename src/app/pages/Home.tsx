@@ -47,6 +47,15 @@ function pickImage(folderName: string, fallbackIndex = 0) {
   return imageEntries[fallbackIndex]?.[1] ?? "";
 }
 
+function pickImages(folderName: string, limit = 4) {
+  const matching = imageEntries
+    .filter(([path]) => path.includes(`/${folderName}/`))
+    .map(([, src]) => src)
+    .filter(Boolean);
+
+  return matching.slice(0, limit);
+}
+
 const imgHeroBackground = pickImage("Living Room", 0);
 const imgInteriorOne = pickImage("Bedrooms", 0);
 const imgInteriorTwo = pickImage("Kitchen & dining", 0);
@@ -54,6 +63,25 @@ const imgInteriorThree = pickImage("Lobby", 0);
 const imgInteriorFour = pickImage("Cafe", 0);
 const imgInteriorFive = pickImage("Pilate studio- Alcore", 0);
 const imgInteriorSix = pickImage("Living Room", 2);
+
+const fallbackHeroImages = [
+  { src: imgHeroBackground, alt: "Elegant neutral-toned living room" },
+  { src: imgInteriorOne, alt: "Minimalist interior with statement lighting" },
+  { src: imgInteriorTwo, alt: "Luxury kitchen with modern finishes" },
+  { src: imgInteriorThree, alt: "Contemporary bedroom with layered textures" },
+  { src: imgInteriorFour, alt: "Designer lounge with curated materials" },
+  { src: imgInteriorFive, alt: "Boutique wellness interior with natural palette" },
+  { src: imgInteriorSix, alt: "Modern living space with sculptural decor" },
+].filter((image) => Boolean(image.src));
+
+const curatedAssetGalleryImages = [
+  ...pickImages("Living Room", 2),
+  ...pickImages("Bedrooms", 2),
+  ...pickImages("Kitchen & dining", 2),
+  ...pickImages("Lobby", 2),
+  ...pickImages("Cafe", 2),
+  ...pickImages("Pilate studio- Alcore", 2),
+].filter(Boolean);
 
 export default function Home() {
   const [heroCarouselApi, setHeroCarouselApi] = useState<CarouselApi>();
@@ -106,16 +134,11 @@ export default function Home() {
     })),
   );
 
-  const heroCarouselImages =
-    projectImagePool.length > 0
-      ? projectImagePool.slice(0, 6)
-      : [
-          { src: imgHeroBackground, alt: "Elegant neutral-toned living room" },
-          { src: imgInteriorOne, alt: "Minimalist interior with statement lighting" },
-          { src: imgInteriorTwo, alt: "Luxury kitchen with modern finishes" },
-          { src: imgInteriorThree, alt: "Contemporary bedroom with layered textures" },
-          { src: imgInteriorFour, alt: "Designer lounge with curated materials" },
-        ];
+  const mergedHeroPool = [...projectImagePool, ...fallbackHeroImages].filter(
+    (image, index, arr) => image.src && arr.findIndex((item) => item.src === image.src) === index,
+  );
+
+  const heroCarouselImages = mergedHeroPool.slice(0, 8);
 
   const serviceItems = [
     {
@@ -190,18 +213,12 @@ export default function Home() {
     },
   ];
 
-  const galleryImages =
-    projectImagePool.length > 0
-      ? projectImagePool.map((image) => image.src)
-      : [
-          imgHeroBackground,
-          imgInteriorOne,
-          imgInteriorTwo,
-          imgInteriorThree,
-          imgInteriorFour,
-          imgInteriorFive,
-          imgInteriorSix,
-        ];
+  const galleryImages = [
+    ...projectImagePool.map((image) => image.src),
+    ...curatedAssetGalleryImages,
+  ]
+    .filter((src, index, arr) => src && arr.indexOf(src) === index)
+    .slice(0, 12);
 
   return (
     <>
@@ -374,9 +391,9 @@ export default function Home() {
               transition={{ duration: 0.7 }}
             >
               <img
-                src={imgInteriorFive}
-                alt="Interior design about section"
-                className="h-[480px] w-full object-cover"
+                src="/logo.png"
+                alt="WEND logo"
+                className="h-[480px] w-full object-contain bg-white p-6"
               />
             </motion.div>
 

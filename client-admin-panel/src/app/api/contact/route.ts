@@ -26,14 +26,18 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       name?: string;
       email?: string;
+      location?: string;
       service?: string;
       message?: string;
+      skipEmailNotification?: boolean;
     };
 
     const name = body.name?.trim() ?? '';
     const email = body.email?.trim() ?? '';
+    const location = body.location?.trim() ?? '';
     const service = body.service?.trim() ?? '';
     const message = body.message?.trim() ?? '';
+    const skipEmailNotification = body.skipEmailNotification === true;
 
     if (!name) {
       return NextResponse.json({ message: 'Name is required.' }, { status: 400, headers: getCorsHeaders() });
@@ -57,18 +61,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const contact = await contactsDb.create({ name, email, service, message });
+    const contact = await contactsDb.create({ name, email, location, service, message });
 
-    let emailNotificationSent = false;
+    let emailNotificationSent = skipEmailNotification;
     let warning: string | undefined;
 
-    try {
-      await sendContactNotificationEmail({ name, email, service, message });
-      emailNotificationSent = true;
-    } catch (mailError) {
-      console.error('Failed to send contact notification email:', mailError);
-      warning =
-        'Your enquiry was saved successfully, but email notification is not configured correctly yet.';
+    if (!skipEmailNotification) {
+      try {
+        await sendContactNotificationEmail({ name, email, location, service, message });
+        emailNotificationSent = true;
+      } catch (mailError) {
+        console.error('Failed to send contact notification email:', mailError);
+        warning =
+          'Your enquiry was saved successfully, but email notification is not configured correctly yet.';
+      }
     }
 
     return NextResponse.json(
