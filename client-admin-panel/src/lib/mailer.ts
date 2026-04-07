@@ -1,9 +1,11 @@
 import nodemailer from 'nodemailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 type MailConfig = {
   host: string;
   port: number;
   secure: boolean;
+  ipFamily: 4 | 6;
   user: string;
   pass: string;
   from: string;
@@ -13,6 +15,7 @@ type MailConfig = {
 const readMailConfig = (): MailConfig => {
   const host = process.env.SMTP_HOST?.trim();
   const portRaw = process.env.SMTP_PORT?.trim();
+  const ipFamilyRaw = process.env.SMTP_IP_FAMILY?.trim();
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_PASS;
   const from = process.env.SMTP_FROM_EMAIL?.trim();
@@ -29,10 +32,13 @@ const readMailConfig = (): MailConfig => {
     throw new Error('SMTP_PORT must be a valid positive number.');
   }
 
+  const ipFamily = ipFamilyRaw === '6' ? 6 : 4;
+
   return {
     host,
     port,
     secure: port === 465,
+    ipFamily,
     user,
     pass,
     from,
@@ -44,15 +50,18 @@ let cachedTransporter: nodemailer.Transporter | null = null;
 
 const getTransporter = (config: MailConfig) => {
   if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport({
+    const transportOptions: SMTPTransport.Options & { family?: 4 | 6 } = {
       host: config.host,
       port: config.port,
       secure: config.secure,
+      family: config.ipFamily,
       auth: {
         user: config.user,
         pass: config.pass,
       },
-    });
+    };
+
+    cachedTransporter = nodemailer.createTransport(transportOptions);
   }
 
   return cachedTransporter;
