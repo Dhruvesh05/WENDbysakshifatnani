@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { connectDB, projectsDb } from '../../../../lib/db';
+import { connectDB, projectsDb } from 'lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../../lib/cors';
 
 export const runtime = 'nodejs';
 
-export async function OPTIONS() {
-  return createCorsPreflightResponse();
+export async function OPTIONS(request: Request) {
+  return createCorsPreflightResponse(request);
 }
 
 export async function GET(
@@ -18,12 +18,12 @@ export async function GET(
     await connectDB();
     const project = await projectsDb.getById(id);
     if (!project) {
-      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders(_request) });
     }
-    return NextResponse.json(project, { headers: getCorsHeaders() });
+    return NextResponse.json(project, { headers: getCorsHeaders(_request) });
   } catch (error) {
     console.error('Failed to fetch project by id:', error);
-    return NextResponse.json({ message: 'Failed to fetch project.' }, { status: 500, headers: getCorsHeaders() });
+    return NextResponse.json({ message: 'Failed to fetch project.' }, { status: 500, headers: getCorsHeaders(_request) });
   }
 }
 
@@ -52,13 +52,13 @@ export async function PUT(
     });
 
     if (!project) {
-      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders(request) });
     }
 
-    return NextResponse.json(project, { headers: getCorsHeaders() });
+    return NextResponse.json(project, { headers: getCorsHeaders(request) });
   } catch (error) {
     console.error('Failed to update project:', error);
-    return NextResponse.json({ message: 'Failed to update project.' }, { status: 500, headers: getCorsHeaders() });
+    return NextResponse.json({ message: 'Failed to update project.' }, { status: 500, headers: getCorsHeaders(request) });
   }
 }
 
@@ -72,11 +72,11 @@ export async function DELETE(
     await connectDB();
     const deleted = await projectsDb.delete(id);
     if (!deleted) {
-      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders(_request) });
     }
-    return new Response(null, { status: 204, headers: getCorsHeaders() });
+    return new Response(null, { status: 204, headers: getCorsHeaders(_request) });
   } catch (error) {
     console.error('Failed to delete project:', error);
-    return NextResponse.json({ message: 'Failed to delete project.' }, { status: 500, headers: getCorsHeaders() });
+    return NextResponse.json({ message: 'Failed to delete project.' }, { status: 500, headers: getCorsHeaders(_request) });
   }
 }

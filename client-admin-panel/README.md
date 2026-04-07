@@ -77,6 +77,64 @@ Visit `http://localhost:3000` in your browser to access the admin panel.
 
 If the admin panel is deployed separately from the API, set `NEXT_PUBLIC_API_URL` to the backend URL in the hosting environment. If the backend is on a different origin, also set `CORS_ORIGIN` on the backend to the admin panel URL.
 
+## Supabase Setup
+
+This admin panel now uses Supabase for:
+
+- `projects` table
+- `portfolios` table
+- `contacts` table
+- image uploads via Supabase Storage
+
+Set these environment variables in `client-admin-panel/.env.local` (and in production):
+
+```env
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+SUPABASE_STORAGE_BUCKET=wend-media
+```
+
+Keep `SUPABASE_SERVICE_ROLE_KEY` server-only. Do not expose it in client-side env vars.
+
+### Required tables (example schema)
+
+```sql
+create table if not exists public.projects (
+   id text primary key,
+   title text not null,
+   description text not null,
+   location text,
+   category text,
+   images jsonb not null default '[]'::jsonb,
+   created_at timestamptz not null default now(),
+   updated_at timestamptz not null default now()
+);
+
+create table if not exists public.portfolios (
+   id text primary key,
+   title text not null,
+   description text not null,
+   images jsonb not null default '[]'::jsonb,
+   created_at timestamptz not null default now(),
+   updated_at timestamptz not null default now()
+);
+
+create table if not exists public.contacts (
+   id text primary key,
+   name text not null,
+   email text not null,
+   location text,
+   service text,
+   message text not null,
+   created_at timestamptz not null default now()
+);
+```
+
+### Required storage bucket
+
+- Create a bucket named `wend-media` (or set a different name in `SUPABASE_STORAGE_BUCKET`).
+- Make the bucket public if you want direct public URLs for uploaded images.
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.

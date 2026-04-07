@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { connectDB, portfoliosDb } from '../../../lib/db';
+import { connectDB, portfoliosDb } from 'lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../lib/cors';
 
 export const runtime = 'nodejs';
 
-export async function OPTIONS() {
-  return createCorsPreflightResponse();
+export async function OPTIONS(request: Request) {
+  return createCorsPreflightResponse(request);
 }
 
 const getPagination = (request: Request) => {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     console.info('[api/portfolios] GET', { page, limit });
     await connectDB();
     const portfolios = await portfoliosDb.getAll({ limit, skip });
-    return NextResponse.json(portfolios, { headers: getCorsHeaders() });
+    return NextResponse.json(portfolios, { headers: getCorsHeaders(request) });
   } catch (error) {
     console.error('Failed to fetch portfolios:', error);
     return NextResponse.json(
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
         message: 'Failed to fetch portfolios.',
         detail: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500, headers: getCorsHeaders() },
+      { status: 500, headers: getCorsHeaders(request) },
     );
   }
 }
@@ -49,10 +49,10 @@ export async function POST(request: Request) {
     };
 
     if (!body.title?.trim()) {
-      return NextResponse.json({ message: 'Title is required.' }, { status: 400, headers: getCorsHeaders() });
+      return NextResponse.json({ message: 'Title is required.' }, { status: 400, headers: getCorsHeaders(request) });
     }
     if (!body.description?.trim()) {
-      return NextResponse.json({ message: 'Description is required.' }, { status: 400, headers: getCorsHeaders() });
+      return NextResponse.json({ message: 'Description is required.' }, { status: 400, headers: getCorsHeaders(request) });
     }
 
     const portfolio = await portfoliosDb.create({
@@ -61,12 +61,15 @@ export async function POST(request: Request) {
       images: Array.isArray(body.images) ? body.images : [],
     });
 
-    return NextResponse.json(portfolio, { status: 201, headers: getCorsHeaders() });
+    return NextResponse.json(portfolio, { status: 201, headers: getCorsHeaders(request) });
   } catch (error) {
     console.error('Failed to create portfolio:', error);
     return NextResponse.json(
-      { message: 'Failed to create portfolio.' },
-      { status: 500, headers: getCorsHeaders() },
+      {
+        message: 'Failed to create portfolio.',
+        detail: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500, headers: getCorsHeaders(request) },
     );
   }
 }

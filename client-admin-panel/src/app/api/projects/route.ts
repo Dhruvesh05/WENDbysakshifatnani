@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { connectDB, projectsDb } from '../../../lib/db';
+import { connectDB, projectsDb } from 'lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../lib/cors';
 
 export const runtime = 'nodejs';
 
-export async function OPTIONS() {
-  return createCorsPreflightResponse();
+export async function OPTIONS(request: Request) {
+  return createCorsPreflightResponse(request);
 }
 
 const getPagination = (request: Request) => {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     console.info('[api/projects] GET', { page, limit });
     await connectDB();
     const projects = await projectsDb.getAll({ limit, skip });
-    return NextResponse.json(projects, { headers: getCorsHeaders() });
+    return NextResponse.json(projects, { headers: getCorsHeaders(request) });
   } catch (error) {
     console.error('Failed to fetch projects:', error);
     return NextResponse.json(
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
         message: 'Failed to fetch projects.',
         detail: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500, headers: getCorsHeaders() },
+      { status: 500, headers: getCorsHeaders(request) },
     );
   }
 }
@@ -51,10 +51,10 @@ export async function POST(request: Request) {
     };
 
     if (!body.title?.trim()) {
-      return NextResponse.json({ message: 'Title is required.' }, { status: 400 });
+      return NextResponse.json({ message: 'Title is required.' }, { status: 400, headers: getCorsHeaders(request) });
     }
     if (!body.description?.trim()) {
-      return NextResponse.json({ message: 'Description is required.' }, { status: 400 });
+      return NextResponse.json({ message: 'Description is required.' }, { status: 400, headers: getCorsHeaders(request) });
     }
 
     const project = await projectsDb.create({
@@ -65,9 +65,15 @@ export async function POST(request: Request) {
       images: Array.isArray(body.images) ? body.images : [],
     });
 
-    return NextResponse.json(project, { status: 201, headers: getCorsHeaders() });
+    return NextResponse.json(project, { status: 201, headers: getCorsHeaders(request) });
   } catch (error) {
     console.error('Failed to create project:', error);
-    return NextResponse.json({ message: 'Failed to create project.' }, { status: 500, headers: getCorsHeaders() });
+    return NextResponse.json(
+      {
+        message: 'Failed to create project.',
+        detail: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500, headers: getCorsHeaders(request) },
+    );
   }
 }

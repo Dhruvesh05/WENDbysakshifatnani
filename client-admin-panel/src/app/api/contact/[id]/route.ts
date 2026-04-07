@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { connectDB, contactsDb } from '../../../../lib/db';
+import { connectDB, contactsDb } from 'lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../../lib/cors';
 
 export const runtime = 'nodejs';
 
-export async function OPTIONS() {
-  return createCorsPreflightResponse();
+export async function OPTIONS(request: Request) {
+  return createCorsPreflightResponse(request);
 }
 
 export async function DELETE(
@@ -21,16 +21,16 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json(
         { message: 'Contact message not found.' },
-        { status: 404, headers: getCorsHeaders() },
+        { status: 404, headers: getCorsHeaders(_request) },
       );
     }
 
-    return new Response(null, { status: 204, headers: getCorsHeaders() });
+    return new Response(null, { status: 204, headers: getCorsHeaders(_request) });
   } catch (error) {
     console.error('Failed to delete contact message:', error);
     return NextResponse.json(
       { message: 'Failed to delete contact message.' },
-      { status: 500, headers: getCorsHeaders() },
+      { status: 500, headers: getCorsHeaders(_request) },
     );
   }
 }
