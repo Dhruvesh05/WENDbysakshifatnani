@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { projectsDb } from '../../../../lib/db';
+import { connectDB, projectsDb } from '../../../../lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../../lib/cors';
 
 export const runtime = 'nodejs';
@@ -12,20 +12,29 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
-  const project = await projectsDb.getById(id);
-  if (!project) {
-    return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+  try {
+    const { id } = await params;
+    console.info('[api/projects/:id] GET', { id });
+    await connectDB();
+    const project = await projectsDb.getById(id);
+    if (!project) {
+      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+    }
+    return NextResponse.json(project, { headers: getCorsHeaders() });
+  } catch (error) {
+    console.error('Failed to fetch project by id:', error);
+    return NextResponse.json({ message: 'Failed to fetch project.' }, { status: 500, headers: getCorsHeaders() });
   }
-  return NextResponse.json(project, { headers: getCorsHeaders() });
 }
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
   try {
+    const { id } = await params;
+    console.info('[api/projects/:id] PUT', { id });
+    await connectDB();
     const body = (await request.json()) as {
       title?: string;
       description?: string;
@@ -47,7 +56,8 @@ export async function PUT(
     }
 
     return NextResponse.json(project, { headers: getCorsHeaders() });
-  } catch {
+  } catch (error) {
+    console.error('Failed to update project:', error);
     return NextResponse.json({ message: 'Failed to update project.' }, { status: 500, headers: getCorsHeaders() });
   }
 }
@@ -56,10 +66,17 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
-  const deleted = await projectsDb.delete(id);
-  if (!deleted) {
-    return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+  try {
+    const { id } = await params;
+    console.info('[api/projects/:id] DELETE', { id });
+    await connectDB();
+    const deleted = await projectsDb.delete(id);
+    if (!deleted) {
+      return NextResponse.json({ message: 'Project not found.' }, { status: 404, headers: getCorsHeaders() });
+    }
+    return new Response(null, { status: 204, headers: getCorsHeaders() });
+  } catch (error) {
+    console.error('Failed to delete project:', error);
+    return NextResponse.json({ message: 'Failed to delete project.' }, { status: 500, headers: getCorsHeaders() });
   }
-  return new Response(null, { status: 204, headers: getCorsHeaders() });
 }

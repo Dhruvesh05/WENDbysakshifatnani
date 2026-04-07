@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { contactsDb } from '../../../lib/db';
+import { connectDB, contactsDb } from '../../../lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../lib/cors';
 import { sendContactNotificationEmail } from '../../../lib/mailer';
 
@@ -9,13 +9,31 @@ export async function OPTIONS() {
   return createCorsPreflightResponse();
 }
 
-export async function GET() {
+const getPagination = (request: Request) => {
+  const { searchParams } = new URL(request.url);
+  const page = Number(searchParams.get('page') ?? '1');
+  const limit = Number(searchParams.get('limit') ?? '20');
+  const safePage = Number.isFinite(page) && page > 0 ? Math.trunc(page) : 1;
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 20;
+  const skip = (safePage - 1) * safeLimit;
+
+  return { page: safePage, limit: safeLimit, skip };
+};
+
+export async function GET(request: Request) {
   try {
-    const contacts = await contactsDb.getAll();
+    const { page, limit, skip } = getPagination(request);
+    console.info('[api/contact] GET', { page, limit });
+    await connectDB();
+    const contacts = await contactsDb.getAll({ limit, skip });
     return NextResponse.json(contacts, { headers: getCorsHeaders() });
-  } catch {
+  } catch (error) {
+    console.error('Failed to fetch contact messages:', error);
     return NextResponse.json(
-      { message: 'Failed to fetch contact messages.' },
+      {
+        message: 'Failed to fetch contact messages.',
+        detail: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500, headers: getCorsHeaders() },
     );
   }
@@ -23,6 +41,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    console.info('[api/contact] POST');
+    await connectDB();
     const body = (await request.json()) as {
       name?: string;
       email?: string;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { contactsDb } from '../../../../lib/db';
+import { connectDB, contactsDb } from '../../../../lib/db';
 import { createCorsPreflightResponse, getCorsHeaders } from '../../../../lib/cors';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,8 @@ export async function DELETE(
   const { id } = await params;
 
   try {
+    console.info('[api/contact/:id] DELETE', { id });
+    await connectDB();
     const deleted = await contactsDb.delete(id);
     if (!deleted) {
       return NextResponse.json(
@@ -24,7 +26,8 @@ export async function DELETE(
     }
 
     return new Response(null, { status: 204, headers: getCorsHeaders() });
-  } catch {
+  } catch (error) {
+    console.error('Failed to delete contact message:', error);
     return NextResponse.json(
       { message: 'Failed to delete contact message.' },
       { status: 500, headers: getCorsHeaders() },
