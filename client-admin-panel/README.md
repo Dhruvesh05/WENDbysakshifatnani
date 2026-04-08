@@ -77,6 +77,18 @@ Visit `http://localhost:3000` in your browser to access the admin panel.
 
 If the admin panel is deployed separately from the API, set `NEXT_PUBLIC_API_URL` to the backend URL in the hosting environment. If the backend is on a different origin, also set `CORS_ORIGIN` on the backend to the admin panel URL.
 
+Health endpoints:
+
+- `GET /health` (Render health check)
+- `GET /api/health` (API health with CORS headers)
+
+If Render returns `502`:
+
+1. Confirm service root directory is `client-admin-panel`.
+2. Confirm build command is `npm ci ; npm run build`.
+3. Confirm start command is `npm run start`.
+4. Confirm required env vars are set.
+
 ### Environment Variable Placement (Vercel vs Render)
 
 Use this split for production:

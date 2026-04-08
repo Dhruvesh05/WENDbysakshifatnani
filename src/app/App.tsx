@@ -1,6 +1,7 @@
 import React from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
+import { ApiProvider } from "./context/ApiContext";
 
 type ErrorBoundaryState = {
   hasError: boolean;
@@ -45,7 +46,9 @@ class AppErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBou
 export default function App() {
   return (
     <AppErrorBoundary>
-      <RouterProvider router={router} />
+      <ApiProvider>
+        <RouterProvider router={router} />
+      </ApiProvider>
     </AppErrorBoundary>
   );
 }

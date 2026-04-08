@@ -8,6 +8,7 @@ import {
   Home as HomeIcon,
   Ruler,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -26,7 +27,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "../components/ui/dialog";
-import { fetchProjects, WebsiteProject } from "../lib/api";
+import { fetchProjects, WebsiteProject, checkServerHealth } from "../lib/api";
 
 const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
   eager: true,
@@ -87,26 +88,68 @@ export default function Home() {
   const [heroCarouselApi, setHeroCarouselApi] = useState<CarouselApi>();
   const [projects, setProjects] = useState<WebsiteProject[]>([]);
   const [projectsError, setProjectsError] = useState("");
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [isServerHealthy, setIsServerHealthy] = useState<boolean | null>(null);
+  const [loadingPhase, setLoadingPhase] = useState<"health-check" | "loading" | "done">("health-check");
 
   useEffect(() => {
     let isMounted = true;
+    let retryCount = 0;
+    const MAX_HEALTH_RETRIES = 3;
+
+    const checkHealth = async () => {
+      try {
+        const isHealthy = await checkServerHealth();
+        if (isMounted) {
+          setIsServerHealthy(isHealthy);
+          if (!isHealthy && retryCount < MAX_HEALTH_RETRIES) {
+            retryCount++;
+            // Retry health check after 2 seconds
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await checkHealth();
+          }
+        }
+      } catch (error) {
+        console.error('[health-check] failed', { error });
+        if (isMounted) {
+          setIsServerHealthy(false);
+        }
+      }
+    };
 
     const loadProjects = async () => {
+      setIsLoadingProjects(true);
+      setLoadingPhase("loading");
       try {
         const data = await fetchProjects();
         if (isMounted) {
           setProjects(data);
           setProjectsError("");
+          setLoadingPhase("done");
         }
       } catch (error) {
         if (isMounted) {
           setProjects([]);
-          setProjectsError(error instanceof Error ? error.message : "Failed to load projects.");
+          setProjectsError(
+            error instanceof Error 
+              ? error.message 
+              : "Failed to load projects. Server may be starting up—please refresh in a moment."
+          );
+          setLoadingPhase("done");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProjects(false);
         }
       }
     };
 
-    loadProjects();
+    // Start health check first
+    checkHealth().then(() => {
+      if (isMounted) {
+        loadProjects();
+      }
+    });
 
     return () => {
       isMounted = false;
@@ -269,7 +312,25 @@ export default function Home() {
               <ArrowRight className="size-5" />
             </Link>
             {projectsError ? (
-              <p className="text-sm text-white/80">Showing fallback content: {projectsError}</p>
+              <div className="mt-4 rounded-md bg-red-500/20 px-4 py-3 text-sm text-white/90">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="size-4 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Unable to load live projects</p>
+                    <p className="text-white/70 text-xs mt-1">{projectsError}</p>
+                    <p className="text-white/70 text-xs mt-2">Showing fallback portfolio. Please refresh to try again.</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {isLoadingProjects ? (
+              <div className="mt-4 rounded-md bg-blue-500/20 px-4 py-3 text-sm text-blue-100">
+                <p className="animate-pulse">🚀 Server is starting... this may take 20–30 seconds. Please wait.</p>
+              </div>
+            ) : isServerHealthy === false ? (
+              <div className="mt-4 rounded-md bg-yellow-500/20 px-4 py-3 text-sm text-yellow-100">
+                <p>⏳ Backend is initializing. Retrying connection... Please be patient.</p>
+              </div>
             ) : null}
           </motion.div>
         </div>

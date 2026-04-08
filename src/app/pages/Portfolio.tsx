@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
+import { AlertTriangle } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -7,7 +8,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../components/ui/carousel";
-import { fetchPortfolios, WebsitePortfolio } from "../lib/api";
+import { fetchPortfolios, WebsitePortfolio, checkServerHealth } from "../lib/api";
 
 const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
   eager: true,
@@ -84,11 +85,36 @@ export default function Portfolio() {
     .filter((group) => group.images.length > 0);
 
   const [categoryGroups, setCategoryGroups] = React.useState(fallbackCategoryGroups);
+  const [portfolioError, setPortfolioError] = React.useState('');
+  const [isLoadingPortfolios, setIsLoadingPortfolios] = React.useState(false);
+  const [isServerHealthy, setIsServerHealthy] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
     let mounted = true;
+    let retryCount = 0;
+    const MAX_HEALTH_RETRIES = 3;
+
+    const checkHealth = async () => {
+      try {
+        const isHealthy = await checkServerHealth();
+        if (mounted) {
+          setIsServerHealthy(isHealthy);
+          if (!isHealthy && retryCount < MAX_HEALTH_RETRIES) {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await checkHealth();
+          }
+        }
+      } catch (error) {
+        console.error('[health-check] failed', { error });
+        if (mounted) {
+          setIsServerHealthy(false);
+        }
+      }
+    };
 
     const loadPortfolios = async () => {
+      setIsLoadingPortfolios(true);
       try {
         const data = await fetchPortfolios();
 
@@ -106,12 +132,22 @@ export default function Portfolio() {
         if (mapped.length > 0) {
           setCategoryGroups(mapped);
         }
-      } catch {
+        setPortfolioError('');
+      } catch (error) {
         // Keep fallback category groups when backend is unavailable.
+        setPortfolioError(error instanceof Error ? error.message : 'Failed to load latest portfolios.');
+      } finally {
+        if (mounted) {
+          setIsLoadingPortfolios(false);
+        }
       }
     };
 
-    loadPortfolios();
+    checkHealth().then(() => {
+      if (mounted) {
+        loadPortfolios();
+      }
+    });
 
     return () => {
       mounted = false;
@@ -139,6 +175,27 @@ export default function Portfolio() {
           >
             Explore our collection of thoughtfully designed spaces that blend functionality with aesthetic excellence
           </motion.p>
+          {portfolioError ? (
+            <div className="mt-4 rounded-md bg-red-500/20 px-4 py-3 text-sm text-white/90 max-w-2xl mx-auto">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="size-4 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Unable to load live portfolio</p>
+                  <p className="text-white/70 text-xs mt-1">{portfolioError}</p>
+                  <p className="text-white/70 text-xs mt-2">Showing curated gallery. Please refresh to try again.</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {isLoadingPortfolios ? (
+            <div className="mt-4 rounded-md bg-blue-500/20 px-4 py-3 text-sm text-blue-100 max-w-2xl mx-auto">
+              <p className="animate-pulse">🚀 Server is starting... this may take 20–30 seconds. Please wait.</p>
+            </div>
+          ) : isServerHealthy === false ? (
+            <div className="mt-4 rounded-md bg-yellow-500/20 px-4 py-3 text-sm text-yellow-100 max-w-2xl mx-auto">
+              <p>⏳ Backend is initializing. Retrying connection... Please be patient.</p>
+            </div>
+          ) : null}
         </div>
       </section>
 

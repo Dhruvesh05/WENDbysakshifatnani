@@ -6,6 +6,19 @@ import { useRouter } from 'next/navigation';
 const LoginPage = () => {
   const router = useRouter();
 
+  const resolveSafeNextPath = () => {
+    if (typeof window === 'undefined') {
+      return '/';
+    }
+
+    const rawNext = new URLSearchParams(window.location.search).get('next') || '/';
+    if (!rawNext.startsWith('/') || rawNext.startsWith('//')) {
+      return '/';
+    }
+
+    return rawNext;
+  };
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,10 +45,7 @@ const LoginPage = () => {
         return;
       }
 
-      const nextParam =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('next') || '/'
-          : '/';
+      const nextParam = resolveSafeNextPath();
 
       router.replace(nextParam);
       router.refresh();

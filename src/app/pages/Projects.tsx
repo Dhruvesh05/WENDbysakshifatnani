@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
-import { fetchProjects, WebsiteProject } from "../lib/api";
+import { AlertTriangle } from "lucide-react";
+import { fetchProjects, WebsiteProject, checkServerHealth } from "../lib/api";
 
 const imageModules = import.meta.glob("../../assets/**/*.{jpg,jpeg,png,JPG,JPEG,PNG}", {
   eager: true,
@@ -132,13 +133,37 @@ export default function Projects() {
   const [filter, setFilter] = React.useState<string>("All");
   const [projects, setProjects] = React.useState<ProjectViewModel[]>(fallbackProjects);
   const [projectError, setProjectError] = React.useState("");
+  const [isLoadingProjects, setIsLoadingProjects] = React.useState(false);
+  const [isServerHealthy, setIsServerHealthy] = React.useState<boolean | null>(null);
   const [activeSlides, setActiveSlides] = React.useState<Record<number, number>>({});
   const touchStartX = React.useRef<Record<number, number>>({});
 
   React.useEffect(() => {
     let mounted = true;
+    let retryCount = 0;
+    const MAX_HEALTH_RETRIES = 3;
+
+    const checkHealth = async () => {
+      try {
+        const isHealthy = await checkServerHealth();
+        if (mounted) {
+          setIsServerHealthy(isHealthy);
+          if (!isHealthy && retryCount < MAX_HEALTH_RETRIES) {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await checkHealth();
+          }
+        }
+      } catch (error) {
+        console.error('[health-check] failed', { error });
+        if (mounted) {
+          setIsServerHealthy(false);
+        }
+      }
+    };
 
     const loadProjects = async () => {
+      setIsLoadingProjects(true);
       try {
         const data = await fetchProjects();
         if (!mounted || data.length === 0) {
@@ -165,10 +190,18 @@ export default function Projects() {
         setProjectError("");
       } catch (error) {
         setProjectError(error instanceof Error ? error.message : "Failed to load projects.");
+      } finally {
+        if (mounted) {
+          setIsLoadingProjects(false);
+        }
       }
     };
 
-    loadProjects();
+    checkHealth().then(() => {
+      if (mounted) {
+        loadProjects();
+      }
+    });
 
     return () => {
       mounted = false;
@@ -254,7 +287,25 @@ export default function Projects() {
             Transforming visions into reality through thoughtful design, innovative solutions, and exceptional craftsmanship
           </motion.p>
           {projectError ? (
-            <p className="mt-3 text-sm text-[#d9dde2]">Showing saved design entries while live data loads: {projectError}</p>
+            <div className="mt-4 rounded-md bg-red-500/20 px-4 py-3 text-sm text-white/90 max-w-2xl mx-auto">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="size-4 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Unable to load live projects</p>
+                  <p className="text-white/70 text-xs mt-1">{projectError}</p>
+                  <p className="text-white/70 text-xs mt-2">Showing portfolio from recent work. Please refresh to try again.</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {isLoadingProjects ? (
+            <div className="mt-4 rounded-md bg-blue-500/20 px-4 py-3 text-sm text-blue-100 max-w-2xl mx-auto">
+              <p className="animate-pulse">🚀 Server is starting... this may take 20–30 seconds. Please wait.</p>
+            </div>
+          ) : isServerHealthy === false ? (
+            <div className="mt-4 rounded-md bg-yellow-500/20 px-4 py-3 text-sm text-yellow-100 max-w-2xl mx-auto">
+              <p>⏳ Backend is initializing. Retrying connection... Please be patient.</p>
+            </div>
           ) : null}
         </div>
       </section>

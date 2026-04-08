@@ -35,7 +35,8 @@ const resolveAllowedOrigin = (request?: Request) => {
 export const getCorsHeaders = (request?: Request) => ({
   'Access-Control-Allow-Origin': resolveAllowedOrigin(request),
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': '*',
+  'Access-Control-Max-Age': '86400',
   Vary: 'Origin',
 });
 

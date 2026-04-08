@@ -8,11 +8,15 @@ const isPublicPath = (pathname: string) => {
     return true;
   }
 
-  return pathname.startsWith('/_next') || pathname === '/favicon.ico';
+  return pathname.startsWith('/_next') || pathname === '/favicon.ico' || pathname === '/health' || pathname === '/api/health';
 };
 
 const isPublicApiRequest = (request: NextRequest) => {
   const { pathname } = request.nextUrl;
+
+  if (request.method === 'OPTIONS' && pathname.startsWith('/api/')) {
+    return true;
+  }
 
   if (request.method === 'GET' && (pathname === '/api/projects' || pathname.startsWith('/api/projects/'))) {
     return true;
@@ -22,7 +26,7 @@ const isPublicApiRequest = (request: NextRequest) => {
     return true;
   }
 
-  if (request.method === 'OPTIONS' && (pathname.startsWith('/api/projects') || pathname.startsWith('/api/contact'))) {
+  if (request.method === 'GET' && pathname === '/api/health') {
     return true;
   }
 
