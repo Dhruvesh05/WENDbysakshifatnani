@@ -5,7 +5,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendTarget = env.VITE_BACKEND_URL || 'http://localhost:3000'
+  const backendTarget =
+    env.VITE_BACKEND_URL ||
+    env.VITE_API_BASE_URL ||
+    'https://wendbysakshifatnani-edtn.onrender.com'
 
   return {
     plugins: [

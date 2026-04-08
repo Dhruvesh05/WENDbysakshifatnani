@@ -1,27 +1,35 @@
+const normalizeOrigin = (origin: string) => origin.trim().replace(/\/$/, '');
+
 const configuredOrigins = (process.env.CORS_ORIGIN ?? '*')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
-const fallbackOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+const fallbackOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://wen-dbysakshifatnani.vercel.app',
+  'https://wendbysakshifatnani.vercel.app',
+].map((origin) => normalizeOrigin(origin));
 
 const resolveAllowedOrigin = (request?: Request) => {
-  const requestOrigin = request?.headers.get('origin')?.trim();
+  const requestOrigin = request?.headers.get('origin');
+  const normalizedRequestOrigin = requestOrigin ? normalizeOrigin(requestOrigin) : '';
   const wildcardEnabled = configuredOrigins.includes('*');
 
   if (wildcardEnabled) {
     return '*';
   }
 
-  if (requestOrigin && configuredOrigins.includes(requestOrigin)) {
-    return requestOrigin;
+  if (normalizedRequestOrigin && configuredOrigins.includes(normalizedRequestOrigin)) {
+    return normalizedRequestOrigin;
   }
 
-  if (requestOrigin && process.env.NODE_ENV !== 'production' && fallbackOrigins.includes(requestOrigin)) {
-    return requestOrigin;
+  if (normalizedRequestOrigin && fallbackOrigins.includes(normalizedRequestOrigin)) {
+    return normalizedRequestOrigin;
   }
 
-  return configuredOrigins[0] ?? '*';
+  return configuredOrigins[0] ?? fallbackOrigins[0] ?? '*';
 };
 
 export const getCorsHeaders = (request?: Request) => ({

@@ -34,7 +34,7 @@ type AppImportMetaEnv = {
 const appImportMeta = import.meta as ImportMeta & { env?: AppImportMetaEnv };
 const appEnv = appImportMeta?.env ?? {};
 
-const DEFAULT_PROD_API_BASE_URL = 'https://wendbysakshifatnani.onrender.com';
+const DEFAULT_PROD_API_BASE_URL = 'https://wendbysakshifatnani-edtn.onrender.com';
 const fallbackApiBaseUrl =
   appEnv.VITE_API_BASE_URL?.trim() ||
   (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app')

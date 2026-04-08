@@ -77,6 +77,35 @@ Visit `http://localhost:3000` in your browser to access the admin panel.
 
 If the admin panel is deployed separately from the API, set `NEXT_PUBLIC_API_URL` to the backend URL in the hosting environment. If the backend is on a different origin, also set `CORS_ORIGIN` on the backend to the admin panel URL.
 
+### Environment Variable Placement (Vercel vs Render)
+
+Use this split for production:
+
+- Set on **Vercel (public website app)**:
+   - `VITE_API_BASE_URL=https://wendbysakshifatnani-edtn.onrender.com`
+   - `VITE_EMAILJS_SERVICE_ID`
+   - `VITE_EMAILJS_TEMPLATE_ID`
+   - `VITE_EMAILJS_PUBLIC_KEY`
+
+- Set on **Render (backend/admin app)**:
+   - `AUTH_SECRET`
+   - `ADMIN_EMAIL`
+   - `ADMIN_PASSWORD`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SUPABASE_STORAGE_BUCKET`
+   - `CORS_ORIGIN` (include `https://wendbysakshifatnani.vercel.app` and local dev origins)
+   - `SMTP_HOST`
+   - `SMTP_PORT`
+   - `SMTP_IP_FAMILY` (optional, default `4`)
+   - `SMTP_USER`
+   - `SMTP_PASS`
+   - `SMTP_FROM_EMAIL`
+   - `CONTACT_RECEIVER_EMAIL`
+   - `NEXT_PUBLIC_API_URL=https://wendbysakshifatnani-edtn.onrender.com` (only needed if admin frontend is hosted on a different origin than backend)
+
+Never put secrets (like `SUPABASE_SERVICE_ROLE_KEY`, `SMTP_PASS`, `AUTH_SECRET`) in Vite `VITE_*` vars.
+
 ## Supabase Setup
 
 This admin panel now uses Supabase for:
